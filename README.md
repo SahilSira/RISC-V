@@ -107,10 +107,4 @@ spike pk sum1ton_O1.o
 
 ![dis_main](https://github.com/SahilSira/RISC-V/assets/140998855/a6af741e-50aa-4a54-bbd8-8d1fbef1d441)
 
-To debug line by line
-```
-spike -d pk sum1ton_O1.o 
-until pc 0 10184
-reg 0 sp
-reg 0 a2
-```
+
