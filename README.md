@@ -481,3 +481,69 @@ It works like a normal calculator in which the result of the previous operation 
 ![15](https://github.com/SahilSira/RISC-V/assets/140998855/f96b7566-cb29-404e-b139-5a3d5818b15b)
 
 </details>
+
+<details> <summary > Pipelining </summary>
+	
+Pipelining or timing abstract is an important feature in TL verilog as it can be implemented very easily with fewer codes as compared to system verilog which reduces bugs to a great extent. An example of the pipeling for pythogoras theorem using both TL verilog and system verilog in this repo . In TL verilog pipeling can be implemented by defining the pipeline as |calc and the different pipeline stages should be properly align and are indicated by @1, @2 and so on.
+
+## Pipelined pythagorean theorem
+
+![17](https://github.com/SahilSira/RISC-V/assets/140998855/987f6d61-2fe4-47e1-ab79-918fa5f15af4)
+
+## Error detection:
+
+![18](https://github.com/SahilSira/RISC-V/assets/140998855/988420b7-b4f5-4a56-87ec-ce75a4b3dd59)
+
+## Counter and Calculator in Pipeline
+
+The block diagram of the counter with calculator in pipeline is shown below :
+
+![19](https://github.com/SahilSira/RISC-V/assets/140998855/94385eba-fefb-4f19-a6fe-c30a3c2c258e)
+
+The TL-Verilog code is given below :
+
+```
+   $reset = *reset;
+   $op[1:0] = $random[1:0];
+   $val2[31:0] = $rand2[3:0];
+   
+   |calc
+      @1
+         $val1[31:0] = >>1$out;
+         $sum[31:0] = $val1+$val2;
+         $diff[31:0] = $val1-$val2;
+         $prod[31:0] = $val1*$val2;
+         $div[31:0] = $val1/$val2;
+         $out[31:0] = $reset ? 32'h0 : ($op[1] ? ($op[0] ? $div : $prod):($op[0] ? $diff : $sum));
+         
+         $cnt[31:0] = $reset ? 0 : (>>1$cnt + 1); 
+
+```
+
+![20](https://github.com/SahilSira/RISC-V/assets/140998855/4f0b6dff-762f-45b9-b6a9-e33520b0c7fb)
+
+## 2 Cycle Calculator
+
+The block diagram of the 2 cycle calculator is shown below:
+
+![21](https://github.com/SahilSira/RISC-V/assets/140998855/18697c74-184b-4b17-a11d-881a4675c5b7)
+
+The TL-verilog code is shown below :
+```
+   $reset = *reset;
+   $op[1:0] = $random[1:0];
+   $val2[31:0] = $rand2[3:0];
+   
+   |calc
+      @1
+         $val1[31:0] = >>2$out;
+         $sum[31:0] = $val1+$val2;
+         $diff[31:0] = $val1-$val2;
+         $prod[31:0] = $val1*$val2;
+         $div[31:0] = $val1/$val2;
+         $valid = $reset ? 0 : (>>1$valid + 1);
+      @2
+         $out[31:0] = ($reset | ~($valid))  ? 32'h0 : ($op[1] ? ($op[0] ? $div : $prod):($op[0] ? $diff : $sum));
+```
+
+![22](https://github.com/SahilSira/RISC-V/assets/140998855/95b6c099-4926-43ee-bd79-27940d63c158)
