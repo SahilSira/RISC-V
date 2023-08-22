@@ -404,6 +404,10 @@ Makerchip is a free online environment for developing high-quality integrated ci
 
 ![1](https://github.com/SahilSira/RISC-V/assets/140998855/cd411bd7-db16-434d-8659-11a668f51145)
 
+## Conway's Game of Life
+
+![29](https://github.com/SahilSira/RISC-V/assets/140998855/39e97598-bd45-49b1-ac7e-af36c490817c)
+
 </details>
 
 <details >
