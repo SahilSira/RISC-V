@@ -392,16 +392,20 @@ Timing abstract can be done in TL-Verilog. This model is specified for pipelines
 
 </details>
 
-<details >
-<summary >Lab for Combinational logic </summary>
+<details>
+  <summary>Example on Makerchip IDE </summary>
 
-Makerchip IDE
-
+  ## Makerchip IDE: 
 Makerchip is a free online environment for developing high-quality integrated circuits. You can code, compile, simulate, and debug Verilog designs, all from your browser. Your code, block diagrams, and waveforms are tightly integrated.
 
 ## Loading pythagorean Example on Makerchip IDE
 
 ![1](https://github.com/SahilSira/RISC-V/assets/140998855/cd411bd7-db16-434d-8659-11a668f51145)
+
+</details>
+
+<details >
+<summary >Lab for Combinational logic </summary>
 
 We will first implement some basic logic gates on Makerchip IDE to gain understanding of the platform. In TL verilog we simply code the logic itself without requiring to declare the variables separately and $in assignment is also not required
 
