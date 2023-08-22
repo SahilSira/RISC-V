@@ -4,7 +4,7 @@ This github repository summarizes the progress made in the RISCV - ISA program. 
 
 [Day 1 : Introduction to RISC-V ISA and GNU compiler toolchain](#day-1)
 
-
+[Day 2 : Introduction to ABI and Basic Verification Flow](#day-2)
 
 ## Day 1 
 
@@ -225,3 +225,126 @@ spike  pk sign_num_new.o
 </details>
 
 
+## Day 2
+
+<details>
+  <summary>RV64I Base Integer Instruction Set</summary>
+
+RV64I is the base integer instruction set for the 64-bit architecture, which builds upon the RV32I variant. RV64I shares most of the instructions with RV32I but the width of registers is different and there are a few additional instructions only in RV64I. The base integer instruction set has 47 instructions (35 instructions from RV32I and 12 instructions from RV64I). The instructions and their format is shown below :
+
+![1](https://github.com/SahilSira/RISC-V/assets/140998855/1098a0b8-77f6-429e-abc0-3a472da07ea4)
+
+There are 31 general-purpose registers x1–x31, which hold integer values. Register x0 is hardwired to the constant 0. There is no hardwired subroutine return address link register, but the standard software calling convention uses register x1 to hold the return address on a call. For RV32, the x registers are 32 bits wide, and for RV64, they are 64 bits wide. The term XLEN to refer to the current width of an x register in bits (either 32 or 64).
+
+![2](https://github.com/SahilSira/RISC-V/assets/140998855/c748f0f7-99ef-404a-af05-cc5856c3f227)
+
+![3](https://github.com/SahilSira/RISC-V/assets/140998855/d7f3058b-dec9-402c-b3ef-5ae19426ae9f)
+
+In the RISC-V instruction set architecture, instructions are categorized into different formats based on their opcode and operand types. These formats are denoted by single-letter abbreviations. Here's an explanation of each type:
+
+- **R-Type (Register Type)** -  These instructions involve operations that operate on two source registers and store the result in a destination register. They include arithmetic, logical, and bitwise operations. The typical format is: opcode rd, rs1, rs2.
+
+- **I-Type (Immediate Type)** - These instructions have an immediate (constant) value as one of their operands, and they work with a source register to perform operations like arithmetic, logical, and memory operations. The typical format is: opcode rd, rs1, imm.
+
+- **S-Type (Store Type)** - S-type instructions are used for storing data into memory. They combine a source register, a destination address (base register), and an immediate offset to determine where the data should be stored. The typical format is: opcode rs2, imm(rs1).
+
+- **B-Type (Branch Type)** - B-type instructions are used for conditional branching. They compare values from two source registers and use an immediate offset to determine the branching target. These instructions support operations like equality, inequality, and comparison. The typical format is: opcode rs1, rs2, imm.
+
+- **U-Type (Upper Immediate Type)** - U-type instructions are used for loading immediate values into registers. They include unconditional jump instructions. These instructions operate on a single source register and use an immediate value to specify the upper bits of the result. The typical format is: opcode rd, imm.
+
+- **J-Type (Jump Type)** J-type instructions are used for unconditional jumps. They involve using an immediate offset to determine the target address of the jump. These instructions are typically used for implementing function calls and other control flow changes. The typical format is: opcode rd, imm.
+
+The instruction format for all types is shown below :
+
+![4](https://github.com/SahilSira/RISC-V/assets/140998855/935d7e6a-0140-4bda-8d55-abd4237816e1)
+
+To know more about the instructions check this [link](https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf).
+
+</details>
+
+<details>
+  <summary>Application Binary Interface (ABI)</summary>
+
+The ABI is a set of rules that govern how software components, like programs and libraries, interact with each other at the binary level. It defines things like how data is passed between different parts of a program, how function calls are made, and how data structures are organized in memory. The ABI ensures compatibility between different parts of a software ecosystem, making it possible for programs to work together seamlessly even if they're written in different languages or compiled by different compilers. The application program can directly access the registers of the RISC V architecture using system calls. The ABI also known as system call interface enables the application to access the hardware resources via registers.A system call is a specific request your program makes to the operating system to perform a task it can't do on its own. For example, if your program needs to read a file, it would make a system call to ask the operating system to read the file and give it the data. System calls are a way for programs to access the more powerful features of the operating system while staying within the rules defined by the ABI. The ISA is inherently divided into two parts: User & System ISA and User ISA the latter is available to the user directly by system calls.
+
+</details>
+
+<details>
+  <summary>Illustration of ABI</summary>
+
+Consider the C code given below which calculates the sum from 1 to 9 :
+```
+#include<stdio.h>
+
+extern int load(int x, int y);
+
+int main()
+{
+    int result = 0;
+    int count = 9;
+    result = load(0x0,count+1);
+    printf("Sum of numbers from 1 to %d is %d\n",count,result);
+    
+}
+```
+
+Consider the assembly code (ASM) given below :
+```
+.section .text 
+.global load
+.type load, @function
+
+load:
+    add a4, a0, zero
+    add a2, a0, a1
+    add a3, a0, zero
+loop : add a4, a3, a4
+       addi a3, a3, 1
+       blt a3, a2, loop
+       add a0, a4, zero
+       ret
+```
+The flow chart of the function performed by ASM code is shown below :
+
+![5](https://github.com/SahilSira/RISC-V/assets/140998855/d7decab2-afef-4811-8358-4006ee4ef0a2)
+
+To illustrate the ABI the C code shown above will send the values to the ASM code through the function load and the ASM code will perform the function and return the value to C code and the value is displayed by the C code.
+
+**Steps to perform the lab task mentioned above**
+```
+riscv64-unknown-elf-gcc -Ofast -mabi=lp64 -march=rv64i -o custom_1_to_9.o custom_1_to_9.c load.S
+riscv64-unknown-elf-objdump -d custom_1_to_9.o | less
+spike pk custom_1_to_9.o
+```
+
+**Outputs of the Lab**
+
+![sum](https://github.com/SahilSira/RISC-V/assets/140998855/5e7c8222-8795-42a9-80be-765a51c297b6)
+
+![sum_disasselbe](https://github.com/SahilSira/RISC-V/assets/140998855/ef60e8f4-e052-4174-8bd1-c96c9c6be1d9)
+
+</details>
+
+<details>
+  <summary>RISC-V Basic Verification flow using iverilog demo</summary>
+
+For verification of the RISC-V CPU the C code will be converted into HEX file and it will be given to the RISC-V CPU and the output will be displayed and verified. The block diagram is shown below :
+
+![6](https://github.com/SahilSira/RISC-V/assets/140998855/83a88fd3-abeb-4e79-9b9b-04d5b9efae12)
+
+For demo go to the lab directory using the command given below :
+```
+cd ~/riscv_workshop_collaterals/labs/
+chmod 777 rv32im.sh
+./rv32im.sh  # Contains necessary commands to convert C to hex
+```
+
+**Output, Script(rv32im.sh) and firmare.hex**
+
+![lab](https://github.com/SahilSira/RISC-V/assets/140998855/f042481b-14cc-4f30-9bb3-51b48d1bd85e)
+
+![rvsim](https://github.com/SahilSira/RISC-V/assets/140998855/4adcd9eb-beae-4522-886d-0950ce2fc2c1)
+
+![hex](https://github.com/SahilSira/RISC-V/assets/140998855/7ed48be5-3751-4add-98de-e778a3590819)
+
+</details>
