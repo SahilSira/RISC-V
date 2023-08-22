@@ -547,3 +547,109 @@ The TL-verilog code is shown below :
 ```
 
 ![22](https://github.com/SahilSira/RISC-V/assets/140998855/95b6c099-4926-43ee-bd79-27940d63c158)
+
+</details>
+
+<details>
+<summary>Validity</summary>
+<br />
+First, we shall see a distance accumulator coupled with a Pythagorean pipeline as shown below.
+<br />
+	
+![23](https://github.com/SahilSira/RISC-V/assets/140998855/d57295c6-8baf-4483-ae88-fca692967cce)
+<br />
+The TL-verilog code is shown below :
+```
+$reset = *reset;
+   |calc
+      @1
+         $reset = *reset;
+      ?$valid
+         @1
+            $aa_sqr[31:0] = $aa[3:0] * $aa[3:0];
+            $bb_sqr[31:0] = $bb[3:0] * $bb[3:0];
+         @2
+            $cc_sqr[31:0] = $aa_sqr + $bb_sqr;
+         @3
+            $out[31:0] = sqrt($cc_sqr);
+      @4
+         $total_distance[63:0] = $reset ? '0 : ($valid ? >>1$total_distance + $out: >>1$total_distance);  
+   
+```
+<br />
+The output for it generated in MakerChip is given below.<br />
+![24](https://github.com/SahilSira/RISC-V/assets/140998855/1f1131a9-be8d-41f8-a065-b78c17ccd78d)
+<br />
+
+## Cycle Calculator with Validity
+
+The following design is what we are required to create.<br />
+![25](https://github.com/SahilSira/RISC-V/assets/140998855/fec454fb-f712-4043-a6e0-a761a234be7a)
+<br />
+
+The TL-verilog code is shown below :
+```
+  $reset = *reset;
+   |calc
+      @1
+         $valid = $reset ? 0 : >>1$valid+1;
+         $valid_or_reset = $valid || $reset;
+      ?$valid_or_reset
+         @1
+            $val1[31:0] = >>2$out;
+            $sum[31:0] = $val1+$val2;
+            $diff[31:0] = $val1-$val2;
+            $prod[31:0] = $val1*$val2;
+            $div[31:0] = $val1/$val2;
+            $valid = $reset ? 0 : (>>1$valid + 1);
+         @2
+            $out[31:0] = $reset  ? 32'h0 : ($op[1] ? ($op[0] ? $div : $prod):($op[0] ? $diff : $sum));
+
+```
+<br />
+The output in Makerchip is given below.<br />
+![26](https://github.com/SahilSira/RISC-V/assets/140998855/9a789f97-f055-48ba-aba3-dc0a0540a6b8)
+
+## Cycle Calculator with Validity and memory
+
+The design we have to implement is given below.<br />
+![27](https://github.com/SahilSira/RISC-V/assets/140998855/e54b4bc4-7d86-4ee9-be19-8e0d498fff3b)
+
+The TL-verilog code is shown below :
+```
+   |calc
+      @0
+         $reset = *reset;
+         
+      @1
+         $val1 [31:0] = >>2$out;
+         $val2 [31:0] = $rand2[3:0];
+         
+         $valid = $reset ? 1'b0 : >>1$valid + 1'b1 ;
+         $valid_or_reset = $valid || $reset;
+         
+      ?$vaild_or_reset
+         @1   
+            $sum [31:0] = $val1 + $val2;
+            $diff[31:0] = $val1 - $val2;
+            $prod[31:0] = $val1 * $val2;
+            $div[31:0] = $val1 / $val2;
+            
+         @2   
+            $mem[31:0] = $reset ? 32'b0 :
+                         ($op[2:0] == 3'b101) ? $val1 : >>2$mem ;
+            
+            $out [31:0] = $reset ? 32'b0 :
+                          ($op[2:0] == 3'b000) ? $sum :
+                          ($op[2:0] == 3'b001) ? $diff :
+                          ($op[2:0] == 3'b010) ? $prod :
+                          ($op[2:0] == 3'b011) ? $quot :
+                          ($op[2:0] == 3'b100) ? >>2$mem : >>2$out ;
+```
+<br />
+The output in Makerchip is given below.<br />
+
+![28](https://github.com/SahilSira/RISC-V/assets/140998855/d3260de8-0949-4490-8f24-8498f3622aa5)
+
+</details>
+
