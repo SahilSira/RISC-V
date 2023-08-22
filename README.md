@@ -107,6 +107,35 @@ spike pk sum1ton_O1.o
 
 ![dis_main](https://github.com/SahilSira/RISC-V/assets/140998855/a6af741e-50aa-4a54-bbd8-8d1fbef1d441)
 
+To debug line by line
+```
+spike -d pk sum1ton_O1.o 
+until pc 0 10184
+reg 0 sp
+reg 0 a2
+```
+
+**Output of the spike in debug mode is shown below :**
+
+![spike](https://github.com/SahilSira/RISC-V/assets/140998855/a0229bb1-e7c1-450f-87cb-169e8da8d282)
+
+#### Ofast mode
+Consider the same [C program] given in the O1 mode.
+
+In order to map this command to riscv based assembly language compile it in Ofast mode using the riscv-gnu-toolchain shown below
+
+```
+riscv64-unknown-elf-gcc -Ofast -mabi=lp64 -march=rv64i -o sum1ton_Ofast.o sum1ton.c
+riscv64-unknown-elf-objdump -d sum1ton_Ofast.o | less
+spike pk sum1ton_Ofast.o 
+```
+
+**Output of the disassembled file**
+
+![dis_main_ofast](https://github.com/SahilSira/RISC-V/assets/140998855/0dcf8144-41a0-4c0a-ad53-605b73bd277a)
+
+**Observation** - The same C code compiled in Ofast mode used less number of instruction compared to the O1 mode.
+
 </details>
 
 <details>
@@ -186,7 +215,10 @@ spike  pk unsign_num_new.o
 
 **Output of the execution**
 
-#output image
+![unsigne](https://github.com/SahilSira/RISC-V/assets/140998855/13cc63f4-60fb-4932-9d1b-a8f458e5ad27)
+
+![unsigned out](https://github.com/SahilSira/RISC-V/assets/140998855/5adbc7cf-f28c-49e0-aac2-7321cda3554b)
+
 
 #### Signed Numbers
 Generally 2's complement representation is used for the signed numbers. 2’s complement of a number is obtained by inverting each bit of given number plus 1 to least significant bit (LSB). So, positive numbers are represented in binary form and negative numbers are represented in 2’s complement form. There is extra bit for sign representation. If value of sign bit is 0, then number is positive and you can directly represent it in simple binary form, but if value of sign bit 1, then number is negative and 2’s complement of given binary number should be taken. In this representation, zero (0) has only one (unique) representation which is always positive. The range of 2’s complement form is from  **(-2^(n-1))  to ((2^(n-1))-1)**.
@@ -216,7 +248,7 @@ spike  pk sign_num_new.o
 
 **Output of the execution**
 
-#output image
+![signed](https://github.com/SahilSira/RISC-V/assets/140998855/be7ba122-9ab4-4366-be44-971c9d7913a5)
 
 **Different types of format specifiers**
 
