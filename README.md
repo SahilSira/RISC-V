@@ -52,7 +52,7 @@ source .bashrc
 <details>
   <summary>Introduction to RISC-V ISA </summary>
 
-  RISC-V ISA is a base integer ISA and must be present in any implemenatation along with some optional extension. The RISC-V has been designed to support extensive customization and specialization which can be extended  with  one  or  more  optional  instruction-set  extensions,  but  the  base  integer instructions cannot be redefine. The different instructions included in RISC-V are listed below.
+RISC-V ISA is a base integer ISA and must be present in any implemenatation along with some optional extension. The RISC-V has been designed to support extensive customization and specialization which can be extended  with  one  or  more  optional  instruction-set  extensions,  but  the  base  integer instructions cannot be redefine. The different instructions included in RISC-V are listed below.
 
 1. Pseudo instructions - For e.g- mv,li,ret etc
 2. Base integer instruction (RV64I, RV32I)-For e.g-lui,addi etc
