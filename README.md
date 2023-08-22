@@ -6,6 +6,8 @@ This github repository summarizes the progress made in the RISCV - ISA program. 
 
 [Day 2 : Introduction to ABI and Basic Verification Flow](#day-2)
 
+[Day 3 : Digital Logic with TL-Verilog and Makerchip](#day-3)
+
 ## Day 1 
 
 <details> 
@@ -407,6 +409,7 @@ Makerchip is a free online environment for developing high-quality integrated ci
 <details >
 <summary >Lab for Combinational logic </summary>
 
+
 We will first implement some basic logic gates on Makerchip IDE to gain understanding of the platform. In TL verilog we simply code the logic itself without requiring to declare the variables separately and $in assignment is also not required
 
 ## NOT Gate Example on Makerchip IDE
@@ -450,3 +453,31 @@ This is a combinational calculator that can perform +, -, *, / on two input valu
 
 Sequential logic refers to a type of digital logic circuit or system in which the output depends not only on the current inputs but also on the previous states of the circuit. Unlike combinational logic, which only considers the current inputs to generate outputs, sequential logic incorporates memory elements to store information and generate outputs based on both current inputs and past history.
 
+## Fibonacci Series
+
+The block diagram of the fibonacci series generator is shown below :
+
+![10](https://github.com/SahilSira/RISC-V/assets/140998855/0f25c81a-da3c-4554-a846-938e7781fb29)
+
+Output:
+
+![15](https://github.com/mavi62/IIITB_VLSI/assets/57127783/3d1e3090-6c65-46c6-b2d7-8c732c5fd7cf)
+
+
+## Free running counter
+
+The block diagram of the free running counter is shown below :
+
+![12](https://github.com/SahilSira/RISC-V/assets/140998855/8578d8f5-2521-4452-b76d-55f3f2580a35)
+
+Output:
+
+![13](https://github.com/SahilSira/RISC-V/assets/140998855/e6f66dc3-a8a3-4af4-8100-e568993b59fd)
+
+## Sequential Calculator`
+
+It works like a normal calculator in which the result of the previous operation is considered as one of the operand for the next operation. Upon reset the result becomes zero.
+
+![15](https://github.com/SahilSira/RISC-V/assets/140998855/f96b7566-cb29-404e-b139-5a3d5818b15b)
+
+</details>
