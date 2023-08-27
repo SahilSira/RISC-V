@@ -8,6 +8,8 @@ This github repository summarizes the progress made in the RISCV - ISA program. 
 
 [Day 3 : Digital Logic with TL-Verilog and Makerchip](#day-3)
 
+[Day 4 : Basic RISC-V CPU Micro-Architecture](#day-4)
+
 ## Day 1 
 
 <details> 
@@ -657,3 +659,426 @@ The output in Makerchip is given below.<br />
 
 </details>
 
+## Day 4
+
+<details>
+<summary>Introduction to simple RISC-V micro-architecture</summary>
+The block diagram of a basic RISC-V microarchitecture is as shown in figure below. Now, using the Makerchip platform the implementation of the RISC-V microarchitecture or core is done. For starting the implementation a starter code present in reference is used. The starter code consist of -
+
+- A simple RISC-V assembler.
+- An instruction memory containing the sum 1..9 test program.
+- Commented code for register file and memory.
+- Visualization.
+![1](https://github.com/SahilSira/RISC-V/assets/140998855/92ae0e6e-a07d-40a8-9d37-cb951aa4973a)
+
+It's important to note that RISC-V is an instruction set architecture, and microarchitectures 
+based on RISC-V can vary widely depending on the design goals of the processor manufacturer. 
+Different companies and research institutions may develop their own microarchitectures that 
+implement the RISC-V ISA in unique ways, tailored to specific use cases and performance goals.
+
+Here we are designing the basic processor of 3 stages fetch, decode and execute based on 
+RISC-V ISA. For starting the implementation a starter code is present in the github repository 
+provided.
+```bash
+ https://github.com/stevehoover/RISC-V_MYTH_Workshop
+```
+We will follow a test driven development, ie. develop first and then test functionality.
+
+- Template for starting point code of RISC-V CPU.
+```bash
+\m4_TLV_version 1d: tl-x.org
+\SV
+   // This code can be found in: https://github.com/stevehoover/RISC-V_MYTH_Workshop
+   
+   m4_include_lib(['https://raw.githubusercontent.com/BalaDhinesh/RISC-V_MYTH_Workshop/master/tlv_lib/risc-v_shell_lib.tlv'])
+
+\SV
+   m4_makerchip_module   // (Expanded in Nav-TLV pane.)
+\TLV
+
+   // /====================\
+   // | Sum 1 to 9 Program |
+   // \====================/
+   //
+   // Program for MYTH Workshop to test RV32I
+   // Add 1,2,3,...,9 (in that order).
+   //
+   // Regs:
+   //  r10 (a0): In: 0, Out: final sum
+   //  r12 (a2): 10
+   //  r13 (a3): 1..10
+   //  r14 (a4): Sum
+   // 
+   // External to function:
+   m4_asm(ADD, r10, r0, r0)             // Initialize r10 (a0) to 0.
+   // Function:
+   m4_asm(ADD, r14, r10, r0)            // Initialize sum register a4 with 0x0
+   m4_asm(ADDI, r12, r10, 1010)         // Store count of 10 in register a2.
+   m4_asm(ADD, r13, r10, r0)            // Initialize intermediate sum register a3 with 0
+   // Loop:
+   m4_asm(ADD, r14, r13, r14)           // Incremental addition
+   m4_asm(ADDI, r13, r13, 1)            // Increment intermediate register by 1
+   m4_asm(BLT, r13, r12, 1111111111000) // If a3 is less than a2, branch to label named <loop>
+   m4_asm(ADD, r10, r14, r0)            // Store final result to register a0 so that it can be read by main program
+   
+   // Optional:
+   // m4_asm(JAL, r7, 00000000000000000000) // Done. Jump to itself (infinite loop). (Up to 20-bit signed immediate plus implicit 0 bit (unlike JALR) provides byte address; last immediate bit should also be 0)
+   m4_define_hier(['M4_IMEM'], M4_NUM_INSTRS)
+
+   |cpu
+      @0
+         $reset = *reset;
+
+
+
+      // YOUR CODE HERE
+      // ...
+
+      // Note: Because of the magic we are using for visualisation, if visualisation is enabled below,
+      //       be sure to avoid having unassigned signals (which you might be using for random inputs)
+      //       other than those specifically expected in the labs. You'll get strange errors for these.
+
+   
+   // Assert these to end simulation (before Makerchip cycle limit).
+   *passed = *cyc_cnt > 40;
+   *failed = 1'b0;
+   
+   // Macro instantiations for:
+   //  o instruction memory
+   //  o register file
+   //  o data memory
+   //  o CPU visualization
+   |cpu
+      //m4+imem(@1)    // Args: (read stage)
+      //m4+rf(@1, @1)  // Args: (read stage, write stage) - if equal, no register bypass is required
+      //m4+dmem(@4)    // Args: (read/write stage)
+      //m4+myth_fpga(@0)  // Uncomment to run on fpga
+
+   //m4+cpu_viz(@4)    // For visualisation, argument should be at least equal to the last stage of CPU logic. @4 would work for all labs.
+\SV
+   endmodule
+```
+
+</details>
+
+<details>
+<summary>Fetch and decode</summary>
+
+Here we gonna design RiscV Cpu Core for which block diagram is given below :
+![2](https://github.com/SahilSira/RISC-V/assets/140998855/5a9e72ed-3d4f-4c45-bedf-50dd82874e33)
+
+**Program Counter Logic**
+
+The Program Counter, often referred to as the "PC," is a fundamental component of a processor 
+that keeps track of the address of the next instruction to be executed. In the RISC-V 
+architecture, the PC is typically called "pc" or "pc_reg." Overall, the PC logic is crucial 
+for the control flow of a program. It determines which instruction will be executed next and 
+how the program progresses. RISC-V, as a RISC (Reduced Instruction Set Computer) architecture, 
+emphasizes simplicity and regularity in its design, which extends to its PC handling 
+mechanisms.
+
+![3](https://github.com/SahilSira/RISC-V/assets/140998855/02ad5965-f6be-44c5-bf49-d363ce080b50)
+
+```bash
+|cpu
+      @0
+         $reset = *reset;
+         
+         $pc[31:0] = >>1$reset ? 32'b0 : >>1$pc + 32'd4;
+```
+- program counter implementation on makerchipIDE
+![4](https://github.com/SahilSira/RISC-V/assets/140998855/0c22672c-a039-4d62-b7e2-e0cc928c69f0)
+
+**Fetch implementation Logic**
+During the fetch stage, processors fetches the instruction from the memory to the address 
+pointed by the program counter. The program counters holds the address of the next stage, in 
+our case it is after 4 cycle and the instruction memory holds the set of instruction to be 
+executed. The snapshot of the fetch stage is shown below.
+         
+- logic diagram for Fetch
+![5](https://github.com/SahilSira/RISC-V/assets/140998855/1f2e5846-31cd-4044-b3a9-09389258065a)
+
+```bash
+|cpu
+      @0
+         $reset = *reset;
+         $pc[31:0] = >>1$reset ? 32'b0 : >>1$pc + 32'd4;
+
+// Assert these to end simulation (before Makerchip cycle limit).
+*passed = *cyc_cnt > 40;
+*failed = 1'b0;
+
+|cpu
+      m4+imem(@1)    // Args: (read stage)
+
+m4+cpu_viz(@4)
+```
+- Implementation of Fetch Logic on Makerchip along with Diagram and Visualisation.
+![6](https://github.com/SahilSira/RISC-V/assets/140998855/0400b3bf-cce5-4825-9a6d-811cb59b8780)
+
+The current implementations have errors such as the variables are not being used. Fetch Logic 
+to be implemented
+
+![7](https://github.com/SahilSira/RISC-V/assets/140998855/3e28a9fa-ec37-44b1-87b2-2469d5731cce)
+
+- code for implementation of Fetch
+```bash
+@0
+         $reset = *reset;
+         $pc[31:0] = >>1$reset ? 32'b0 : >>1$pc + 32'd4;
+      @1
+         $imem_rd_addr[M4_IMEM_INDEX_CNT-1:0] = $pc[M4_IMEM_INDEX_CNT+1:2];
+         $imem_rd_en = !$reset;
+         $instr[31:0] = $imem_rd_data[31:0];
+      
+      ?$imem_rd_en
+         @1
+            $imem_rd_data[31:0] = /imem[$imem_rd_addr]$instr;          
+```
+
+- Final implementation of Fetch Logic
+
+![8](https://github.com/SahilSira/RISC-V/assets/140998855/062d8cc2-2681-4345-9a34-d8400f0aa165)
+
+![9](https://github.com/SahilSira/RISC-V/assets/140998855/20dc0019-9990-43ea-b447-183edbe40cc3)
+
+**Decode Logic**
+
+Under this section, we look into how to decode the instruction code we fetched from memory.
+
+- Logic Diagram for Decode stage.
+
+![10](https://github.com/SahilSira/RISC-V/assets/140998855/0fe2cfb1-071f-4763-90bb-dd8275364ab6)
+
+Before moving on to Decode logic implementation, it is important to understand how the 
+instruction set and opcode are defined in RISC-V. We have dicussed before the different types 
+of the instruction types. The various types of instrutcion types are summarised in the table 
+along with the binary code. There are 6 instructions type in RISC-V :
+
+- Register (R) type
+- Immediate (I) type
+- Store (S) type
+- Branch (B) type
+- Upper immediate (U) type
+- Jump (J) type
+
+![11](https://github.com/SahilSira/RISC-V/assets/140998855/c4559145-fb41-47d0-81fc-51afacf6f836)
+
+
+
+
+-code for decode logic
+```bash
+@1
+         $is_i_instr = $instr[6:2] ==? 5'b0000x || 
+                       $instr[6:2] ==? 5'b001x0 || 
+                       $instr[6:2] == 5'b11001;
+         $is_r_instr = $instr[6:2] ==? 5'b011x0 || 
+                       $instr[6:2] == 5'b01011 || 
+                       $instr[6:2] == 5'b10100;
+         $is_s_instr = $instr[6:2] ==? 5'b0100x;
+         $is_b_instr = $instr[6:2] ==? 5'b11000;
+         $is_j_instr = $instr[6:2] ==? 5'b11011;
+         $is_u_instr = $instr[6:2] ==? 5'b0x101;
+```
+- Implementation for fetch logic
+![12](https://github.com/SahilSira/RISC-V/assets/140998855/5c75c993-18dd-4f50-9de3-df9601e20169)
+
+![13](https://github.com/SahilSira/RISC-V/assets/140998855/18000745-442c-4595-bb4f-089d63efadf6)
+
+*Lab on instruction immediate code*
+![14](https://github.com/SahilSira/RISC-V/assets/140998855/47dbff7d-075e-4310-9e67-e4438939abd3)
+
+- Code or determining *immediate* for decode logic implementaion
+```bash
+		      $imm[31:0] = $is_i_instr ? {{21{$instr[31]}}, $instr[30:20]} :
+                      $is_s_instr ? {{21{$instr[31]}}, $instr[30:25], $instr[11:7]} :
+                      $is_b_instr ? {{20{$instr[31]}}, $instr[7], $instr[30:25], $instr[11:8], 1'b0} :
+                      $is_u_instr ? {$instr[31:12], 12'b0} :
+                      $is_j_instr ? {{12{$instr[31]}}, $instr[19:12], $instr[20], $instr[30:21], 1'b0} :
+                                    32'b0;
+```
+- Implementaion of the immediate instruction set
+![15](https://github.com/SahilSira/RISC-V/assets/140998855/a3d3a2cf-7dfc-4a31-b602-5e1bd7a9e7c2)
+- VIZ
+![16](https://github.com/SahilSira/RISC-V/assets/140998855/e4c9a80a-a4c8-4e06-9228-902cb0e8a2a3)
+
+*Lab on instruction decode*
+![17](https://github.com/SahilSira/RISC-V/assets/140998855/7b9f689b-8c94-46bd-82da-ea70ecbe1974)
+
+- Code fo nstruction code implmentaion
+```bash
+	 $rs2[4:0] = $instr[24:20];
+         $rs1[4:0] = $instr[19:15];
+         $rd[4:0]  = $instr[11:7];
+         $opcode[6:0] = $instr[6:0];
+         $func7[6:0] = $instr[31:25];
+         $func3[2:0] = $instr[14:12];
+```
+
+- Output
+![18](https://github.com/SahilSira/RISC-V/assets/140998855/28b828b4-db35-45b7-a21e-b34c383d970e)
+- VIZ
+![19](https://github.com/SahilSira/RISC-V/assets/140998855/c80b3faa-488d-4651-995f-c5844c50b411)
+
+*Lab on Decoding Instruction Field Set*
+![20](https://github.com/SahilSira/RISC-V/assets/140998855/91a71f5e-b9dd-4c9d-8901-4c9045fe33c9)
+
+-code for instruction based field set
+```bash
+	$rs2_valid = $is_r_instr || $is_s_instr || $is_b_instr;
+         ?$rs2_valid
+            $rs2[4:0] = $instr[24:20];
+            
+         $rs1_valid = $is_r_instr || $is_i_instr || $is_s_instr || $is_b_instr;
+         ?$rs1_valid
+            $rs1[4:0] = $instr[19:15];
+         
+         $funct3_valid = $is_r_instr || $is_i_instr || $is_s_instr || $is_b_instr;
+         ?$funct3_valid
+            $funct3[2:0] = $instr[14:12];
+            
+         $funct7_valid = $is_r_instr ;
+         ?$funct7_valid
+            $funct7[6:0] = $instr[31:25];
+            
+         $rd_valid = $is_r_instr || $is_i_instr || $is_u_instr || $is_j_instr;
+         ?$rd_valid
+            $rd[4:0] = $instr[11:7];
+```     
+- Output
+![21](https://github.com/SahilSira/RISC-V/assets/140998855/1384fb2f-c1a7-41bd-a221-3b8fbbc8f917)
+- VIZ
+![22](https://github.com/SahilSira/RISC-V/assets/140998855/d4a1b2fc-a70d-4fca-b8b3-4c95bbfaa006)
+
+*Lab on individual instruction decode*
+
+- code
+```bash
+	 $dec_bits [10:0] = {$funct7[5], $funct3, $opcode};
+         $is_beq = $dec_bits ==? 11'bx_000_1100011;
+         $is_bne = $dec_bits ==? 11'bx_001_1100011;
+         $is_blt = $dec_bits ==? 11'bx_100_1100011;
+         $is_bge = $dec_bits ==? 11'bx_101_1100011;
+         $is_bltu = $dec_bits ==? 11'bx_110_1100011;
+         $is_bgeu = $dec_bits ==? 11'bx_111_1100011;
+         $is_addi = $dec_bits ==? 11'bx_000_0010011;
+         $is_add = $dec_bits ==? 11'b0_000_0110011;
+```
+![23](https://github.com/SahilSira/RISC-V/assets/140998855/96c07a93-7613-4b0c-a73e-c1b92ff7abb0)
+
+- Implementaion of individual instruction decode
+![24](https://github.com/SahilSira/RISC-V/assets/140998855/c6437bb3-58a0-4032-bd35-ea536aeedc52)
+
+- VIZ
+![25](https://github.com/SahilSira/RISC-V/assets/140998855/4d21afce-a0e4-45e8-976d-9d0055036205)
+
+</details>
+
+<details>
+<summary>RISC-V control logic</summary>
+	
+Under this section, we will look into the implementation of RISC-V CPU from register file read 
+onwards.	
+**Execute and Register file read/write**
+
+- Pipelined Logic diagram for implementation.
+![26](https://github.com/SahilSira/RISC-V/assets/140998855/318f7922-a20a-4946-9c11-e1ab331332d0)
+
+- Structure of the register design for implementation. Two read operations and one write operation to be performed.
+![27](https://github.com/SahilSira/RISC-V/assets/140998855/2c70da0c-84bb-4e1b-b3ae-cee1a9aaf44b)
+
+- Code for implementaion
+```bash
+	 $rf_wr_en = 1'b0;
+         $rf_wr_index[4:0] = 5'b0;
+         $rf_wr_data[31:0] = 32'b0;
+         $rf_rd_en1 = $rs1_valid;
+         $rf_rd_en2 = $rs2_valid;
+         
+         $rf_rd_index1[4:0] = $rs1;
+         $rf_rd_index2[4:0] = $rs2;
+```
+- Now, we have read the register files, we will connect up the values we have read to the signals we will send to the ALU.
+- Code for connection.
+```bash
+	 $src1_value[31:0] = $rf_rd_data1;
+         $src2_value[31:0] = $rf_rd_data2;
+```
+
+*ALU Imlimentaion*
+We move to the next stage of implementation, ie. ALU. The logic diagram.
+
+![28](https://github.com/SahilSira/RISC-V/assets/140998855/e69e68a3-f50a-4569-bb51-eea8f0959fd3)
+
+- code to implement the arithmatic and logic functionalities of the ALU.
+```bash
+	$result[31:0] = $is_addi ? $src1_value + $imm :
+			$is_add ? $src1_value + $src2_value :
+			32'bx ;
+```
+
+- Implementation upto ALU on Makerchip IDE
+![29](https://github.com/SahilSira/RISC-V/assets/140998855/313f3e1b-1414-4f11-83f6-54d7800559c5)
+
+*Register File Write Implementation*
+
+Under this we go over the implementation of Write funcction after the ALU has performed.
+
+- Logic Diagram
+![30](https://github.com/SahilSira/RISC-V/assets/140998855/0c5ebe2d-f9bb-4cfc-ba27-5832df718f0d)
+
+- Code for writing register file.
+```bash
+	$rf_wr_en = $rd_valid && $rd != 5'b0;
+	$rf_wr_index[4:0] = $rd;
+	$rf_wr_data[31:0] = $result;
+```
+- Implementaion of the register file logic
+![31](https://github.com/SahilSira/RISC-V/assets/140998855/90960cb3-ebe2-4be9-8480-c795a41eb0cd)
+
+**Note** : We will look into arrays under RISC-V.
+
+- Arrays are collection of data of same datatypes.
+- RISC-V processors support arrays through their memory access instructions and addressing modes. In the RISC-V architecture, arrays are commonly managed using a combination of memory locations and registers.
+- Arrays are represented as contiguous blocks of memory in RISC-V.
+- Pointers are used to track the memory address where the array starts.
+- Arrays are accessed using pointers and offsets calculated from the index and element size.
+- Load and store instructions are used to manipulate array elements.
+- Pointer arithmetic involves adding offsets to pointers for accessing different elements.
+- Pointers are initialized with the memory address of the array's first element.
+- Array operations are performed through load-store instructions and pointer manipulation.
+
+![32](https://github.com/SahilSira/RISC-V/assets/140998855/73a26720-4b66-4375-9e96-da9b6495eb80)
+
+*Branch Instruction Imlementaion*
+We will look into the implementations for the various branch instructions, we have decoded earlier.
+
+- Logic Diagram
+![33](https://github.com/SahilSira/RISC-V/assets/140998855/b07faf85-28b8-4cad-9b3f-c5a0b152e7e0)
+
+- All instr with B initials are branch statements. Logic for the branches are as follow
+![34](https://github.com/SahilSira/RISC-V/assets/140998855/7e4d2931-1a05-47e7-b0ed-a560450148bd)
+
+- Code for implementing when to take a branch.
+```bash
+$taken_branch = $is_beq ? ($src1_value == $src2_value):
+		$is_bne ? ($src1_value != $src2_value):
+		$is_blt ? (($src1_value < $src2_value) ^ ($src1_value[31] != $src2_value[31])):
+		$is_bge ? (($src1_value >= $src2_value) ^ ($src1_value[31] != $src2_value[31])):
+		$is_bltu ? ($src1_value < $src2_value):
+		$is_bgeu ? ($src1_value >= $src2_value):
+		1'b0;
+```
+
+- Now, we will look into how to figure out where to branch to.
+- Code to determine the path to Branch to
+```bash
+$br_target_pc[31:0] = $pc + $imm;
+```
+
+- implemenataion of branch instructions
+![35](https://github.com/SahilSira/RISC-V/assets/140998855/df850853-06e9-4c02-9287-56afde52a38f)
+
+
+</details>
