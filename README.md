@@ -1150,7 +1150,7 @@ The logic snippet required is given below.
 </details>
 
 <details>
-<summary>Finalaising the RISC-V CPU</summary>
+<summary>Finalising the RISC-V CPU</summary>
 
 Similar to branch,load will also have 3 cycle delay. So, added a Data Memory 1 write/read 
 memory. Added test case to check the functionality of load/store.
