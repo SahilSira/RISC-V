@@ -10,6 +10,8 @@ This github repository summarizes the progress made in the RISCV - ISA program. 
 
 [Day 4 : Basic RISC-V CPU Micro-Architecture](#day-4)
 
+[Day 5 : Pipelined RISC-V CPU Micro-architecture](#day-5)
+
 ## Day 1 
 
 <details> 
@@ -1082,3 +1084,107 @@ $br_target_pc[31:0] = $pc + $imm;
 
 
 </details>
+
+
+## Day 5
+
+<details> 
+<summary>Pipelining the CPU</summary>
+
+Now pipelining of the CPU core is done, which allows easy retiming and reduces functional bug to a great extent . Pipelining allows faster computaion. For pipelining as mentioned earlier we simply need to add @1, @2 and so on. The snapshot of the pipelining is as shown below. In TL verilog, another advantage is defining of pipeline in systematic order is not necessary. More inforamtion on timming abstract can be found in the IEEE paper "Timing-Abstract Circuit Design in Transaction-Level Verilog"  by Steeve Hoover in makerchip platform itself or else [here](https://ieeexplore.ieee.org/document/8119264).
+
+**Implementing Cycle valid signal**
+
+We are required to get implement the logic in the following block diagram:
+![1](https://github.com/SahilSira/RISC-V/assets/140998855/7cb09515-9f77-40ca-ac43-b142f5a05d68)
+
+- the following code is used for implementaion
+```bash
+
+$valid = $reset ? 1'b0 : ($start) ? 1'b1 : (>>3$valid) ;
+         $start_int = $reset ? 1'b0 : 1'b1;
+         $start = $reset ? 1'b0 : ($start_int && !>>1$start_int);
+```
+
+**Taking care of invalid cycles**
+
+![4](https://github.com/SahilSira/RISC-V/assets/140998855/6eb6b771-ad66-4a7b-a196-849a25ddcbce)
+
+- The code snippet required to implement is.
+```bash
+ $pc[31:0] = (>>1$reset) ? 32'b0 : (>>3$valid_taken_branch) ? (>>3$br_tgt_pc) :  (>>3$int_pc)  ;
+ $valid_taken_branch = $valid && $taken_br;
+```
+
+**Distributing logic**
+
+Pipelining is done in this step. Code is distributed and output is obtained.
+![5](https://github.com/SahilSira/RISC-V/assets/140998855/73708584-c1a7-420c-96cd-208f9f56e469)
+
+
+</details>
+
+<details>
+<summary>Correcting pipeline hazards</summary>
+
+**Register file Bypass to address rd-after-wr hazard**
+
+We are required to implement the logic as per the given figure.
+
+![6](https://github.com/SahilSira/RISC-V/assets/140998855/f7ca74cf-737a-462c-9b80-1f9c54f9b14a)
+
+The logic code required is given below.
+```bash
+$src1_value[31:0] = ((>>1$rf_wr_en) && (>>1$rd == $rs1 )) ? (>>1$result): $rf_rd_data1; 
+$src2_value[31:0] = ((>>1$rf_wr_en) && (>>1$rd == $rs2 )) ? (>>1$result) : $rf_rd_data2;
+```
+
+**Correcting the branch target path**
+
+The logic snippet required is given below.
+```bash
+ $pc[31:0] = (>>1$reset) ? 32'b0 : (>>3$valid_taken_br) ? (>>3$br_tgt_pc) :  (>>3$int_pc)  ;
+         //$valid = $reset ? 1'b0 : ($start) ? 1'b1 : (>>3$valid) ; no need for this
+```
+
+</details>
+
+<details>
+<summary>Finalaising the RISC-V CPU</summary>
+
+Similar to branch,load will also have 3 cycle delay. So, added a Data Memory 1 write/read 
+memory. Added test case to check the functionality of load/store.
+
+```bash
+	uncomment enable m4+dmem(@4)    // Args: (read/write stage)
+ 	connect interface signals using address bits[5:2] to perform load and store (when valid)
+	Additionally Incorporation of Jump feature (JAL and JALR instructions).
+```
+
+
+Final Output : 
+
+![2](https://github.com/SahilSira/RISC-V/assets/140998855/e99ca585-869a-4fee-a224-35508c09d0c1)
+
+![3](https://github.com/SahilSira/RISC-V/assets/140998855/bf4bd47b-2179-459b-9fe6-72cad8b25b2e)
+
+</details> 
+
+## Word of Thanks
+I sciencerly thank **Mr. Kunal Gosh**(Founder/**VSD**) for helping me out to complete this flow smoothly.
+
+## Acknowledgement
+- Kunal Ghosh, VSD Corp. Pvt. Ltd.
+- Chatgpt
+- Simarjeet Singh Thethi, Colleague, IIIT B
+- Sumanto Kar, Sr. Project Technical Assistant, IIT Bombay
+- Emil Jayanth Lal,Colleague, IIIT B
+- Alwin Shaju, Colleague, IIITB
+- Tuhsar Mavi, Colleague, IIITB
+## Reference 
+- https://www.vsdiat.com
+- https://en.wikipedia.org/wiki/Toolchain
+- https://en.wikipedia.org/wiki/GNU_toolchain
+- https://github.com/riscv/riscv-gnu-toolchain
+- https://redwoodeda.com
+- https://github.com/stevehoover
